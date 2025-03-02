@@ -4,6 +4,6 @@ module.exports = {
     transform: {
         "^.+.tsx?$": ["ts-jest", {}],
     },
-    setupFiles: ["test/test-utils.ts"],
+    setupFiles: ["./test/test-utils.ts"],
     testPathIgnorePatterns: ["test-utils.ts"],
 };
