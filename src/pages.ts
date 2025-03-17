@@ -1,64 +1,85 @@
 import {
     ActionRowBuilder,
+    Embed,
     EmbedBuilder,
+    Message,
     MessageEditOptions,
     MessagePayload,
+    StringSelectMenuBuilder,
 } from "discord.js";
 
-export class Page {
-    title = ".";
-    embed: EmbedBuilder | undefined;
+export const embedTemplate = new EmbedBuilder()
+    .setColor(0x0099ff)
+    .setTitle("Some title")
+    .setURL("https://discord.js.org/")
+    .setAuthor({
+        name: "Some name",
+        iconURL: "https://i.imgur.com/AfFp7pu.png",
+        url: "https://discord.js.org",
+    })
+    .setDescription("Some description here")
+    .setThumbnail("https://i.imgur.com/AfFp7pu.png")
+    .addFields(
+        {
+            name: "Regular field title",
+            value: "Some value here",
+        },
+        { name: "\u200B", value: "\u200B" },
+        {
+            name: "Inline field title",
+            value: "Some value here",
+            inline: true,
+        },
+        {
+            name: "Inline field title",
+            value: "Some value here",
+            inline: true,
+        }
+    )
+    .addFields({
+        name: "Inline field title",
+        value: "Some value here",
+        inline: true,
+    })
+    .setImage("https://i.imgur.com/AfFp7pu.png")
+    .setTimestamp()
+    .setFooter({
+        text: "Some footer text here",
+        iconURL: "https://i.imgur.com/AfFp7pu.png",
+    });
 
-    constructor(genEmbed?: EmbedBuilder | true) {
-        this.embed = genEmbed instanceof EmbedBuilder ? genEmbed : undefined;
-        this.embed =
-            genEmbed == true
-                ? new EmbedBuilder()
-                      .setColor(0x0099ff)
-                      .setTitle("Some title")
-                      .setURL("https://discord.js.org/")
-                      .setAuthor({
-                          name: "Some name",
-                          iconURL: "https://i.imgur.com/AfFp7pu.png",
-                          url: "https://discord.js.org",
-                      })
-                      .setDescription("Some description here")
-                      .setThumbnail("https://i.imgur.com/AfFp7pu.png")
-                      .addFields(
-                          {
-                              name: "Regular field title",
-                              value: "Some value here",
-                          },
-                          { name: "\u200B", value: "\u200B" },
-                          {
-                              name: "Inline field title",
-                              value: "Some value here",
-                              inline: true,
-                          },
-                          {
-                              name: "Inline field title",
-                              value: "Some value here",
-                              inline: true,
-                          }
-                      )
-                      .addFields({
-                          name: "Inline field title",
-                          value: "Some value here",
-                          inline: true,
-                      })
-                      .setImage("https://i.imgur.com/AfFp7pu.png")
-                      .setTimestamp()
-                      .setFooter({
-                          text: "Some footer text here",
-                          iconURL: "https://i.imgur.com/AfFp7pu.png",
-                      })
-                : undefined;
+type PageUpdateFunction = (page: Page) => void;
+
+export class Page {
+    title: string | undefined;
+    embed: Embed | EmbedBuilder | undefined;
+    updateFunction: PageUpdateFunction | undefined;
+    footnotes: ActionRowBuilder<StringSelectMenuBuilder>[] | undefined[] = [];
+
+    constructor(data?: EmbedBuilder | Message) {
+        if (data instanceof EmbedBuilder) this.embed = data;
+        if (data instanceof Message) this.importMessage(data);
     }
 
-    publish() {
-        return this.embed != undefined
-            ? ({ embeds: [this.embed] } as MessageEditOptions | MessagePayload)
-            : this.title;
+    publish(): MessageEditOptions | MessagePayload {
+        if (!this.embed && !this.title) return { content: "." };
+
+        const output: MessageEditOptions | MessagePayload = {
+            content: this.title,
+        };
+        if (this.embed) output.embeds = [this.embed];
+        return output;
+    }
+
+    importMessage(msg: Message) {
+        this.embed = msg.embeds[0];
+        this.title = msg.content;
+    }
+
+    update() {
+        if (!this.updateFunction)
+            throw new Error("No update function has been defined");
+        this.updateFunction(this);
     }
 }
 
