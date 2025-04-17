@@ -3,4 +3,3 @@ dist
 .vscode
 .pnpm-store
 .env
-wallaby.js

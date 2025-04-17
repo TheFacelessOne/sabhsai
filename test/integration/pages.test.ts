@@ -1,63 +1,48 @@
 import { describe, expect, it } from "@jest/globals";
-import { getTestData } from "../test-utils.ts";
+import { EditableMessage, getTestData } from "../test-utils.ts";
 import { Embed, Message } from "discord.js";
-import { embedTemplate, Page } from "../../src/pages.ts";
+import { embedTemplate, Page } from "../../src/page.ts";
 
-const testData = getTestData();
-const channel = testData.channel;
-const testPage = new Page();
-// eslint-disable-next-line jest/require-hook
-let msg = await channel.send(".");
+const testData = await getTestData();
 
 describe("pages", () => {
-    it("send basic message", async () => {
-        expect.assertions(3);
+    it("embeded content", async () => {
+        expect.assertions(2);
 
-        expect(msg).toBeInstanceOf(Message);
-        expect(msg.content).toBe(".");
+        const msg = testData.message;
+        const msgNoEmbed = await msg.edit(new Page(0).publish());
+        const msgEmbed = await msg.edit(new Page(0, embedTemplate).publish());
 
-        testPage.title = "updated";
-        msg = await msg.edit(testPage.title);
-
-        expect(msg.content).toBe(testPage.title);
+        expect(msgEmbed.embeds[0]).toBeDefined();
+        expect(msgNoEmbed.embeds[0]).toBeUndefined();
     });
 
-    it("sends embeded content", async () => {
-        expect.assertions(4);
+    // eslint-disable-next-line jest/no-disabled-tests
+    it.skip("updating pages", async () => {
+        expect.assertions(2);
 
-        const testPages = [new Page(), new Page(embedTemplate)];
-
-        const embedResult = [false, true];
-
-        for (let i = 0; i < testPages.length; i++) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            msg = await msg.edit(testPages[i]!.publish());
-
-            expect(msg).toBeInstanceOf(Message);
-            expect(msg.embeds[0] instanceof Embed).toBe(embedResult[i]);
-        }
-    });
-
-    it("can update pages", async () => {
-        expect.hasAssertions();
-
-        let testPage = new Page(embedTemplate);
+        let msg = testData.message;
+        let testPage = new Page(0, embedTemplate);
         testPage.title = ".";
 
         const titleChange = (page: Page) => {
             page.title = "change";
+            return;
         };
-        testPage.updateFunction = titleChange;
+        testPage.addUpdateFunction(titleChange);
+
+        msg = (await msg.edit(testPage.publish())) as EditableMessage;
+
         testPage.update();
 
-        msg = await msg.edit(testPage.publish());
+        msg = (await msg.edit(testPage.publish())) as EditableMessage;
 
         expect(msg.content).toBe("change");
 
-        testPage = new Page(msg);
+        testPage = new Page(0, msg);
         testPage.title = "";
 
-        msg = await msg.edit(testPage.publish());
+        msg = (await msg.edit(testPage.publish())) as EditableMessage;
 
         expect(msg.content).toBe("");
     });

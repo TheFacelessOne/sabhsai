@@ -15,6 +15,8 @@
         "@changesets/cli": "^2.28.1",
         "@eslint/js": "^9.21.0",
         "@jest/globals": "^29.7.0",
+        "@swc/core": "^1.11.12",
+        "@swc/jest": "^0.2.37",
         "dotenv": "^16.4.7",
         "eslint": "^9.21.0",
         "eslint-plugin-jest": "^28.11.0",

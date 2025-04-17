@@ -18,6 +18,11 @@ export default tseslint.config(
         },
     },
     {
-        ignores: ["eslint.config.mjs", "jest.config.js", "node_modules/**/*", "dist/**/*"],
+        ignores: [
+            "eslint.config.mjs",
+            "jest.config.js",
+            "node_modules/**/*",
+            "dist/**/*",
+        ],
     }
 );

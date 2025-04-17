@@ -1,11 +1,10 @@
 // Starts up a discord bot for testing purposes
-export { getTestData };
-
-// Required modules
 import {
     Client,
     GatewayIntentBits,
     IntentsBitField,
+    Message,
+    OmitPartialGroupDMChannel,
     SendableChannels,
     Snowflake,
 } from "discord.js";
@@ -27,15 +26,18 @@ const testClient = new Client({ intents: myIntents });
 const token = process.env.DEV_TOKEN;
 if (!token) throw new Error("No DEV_TOKEN provided");
 
-interface TestData {
+export type EditableMessage = OmitPartialGroupDMChannel<Message<boolean>> & {
+    editable: true;
+};
+
+export interface TestData {
     client: Client;
     channel: SendableChannels;
+    message: EditableMessage;
+    time: number;
 }
 
-async function login(): Promise<TestData> {
-    const alreadyOnline = testClient.uptime != null;
-    if (alreadyOnline) throw new Error("Tried to login twice");
-
+export async function getTestData(): Promise<TestData> {
     await testClient.login(token).catch((error) => {
         throw new Error(error);
     });
@@ -52,16 +54,19 @@ async function login(): Promise<TestData> {
         );
     }
 
+    const testMessage = await testChannel.messages.fetch(
+        process.env.TEST_MESSAGE as Snowflake
+    );
+
+    if (!testMessage.editable)
+        throw new Error("Permissions issues, Message is not editable");
+
     const testData: TestData = Object.freeze({
         client: testClient,
         channel: testChannel,
+        message: testMessage as EditableMessage,
+        time: Date.now(),
     });
 
     return testData;
-}
-
-const td = await login();
-
-function getTestData() {
-    return td;
 }

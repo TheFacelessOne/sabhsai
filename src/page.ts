@@ -1,12 +1,12 @@
 import {
     ActionRowBuilder,
+    BaseMessageOptions,
     Embed,
     EmbedBuilder,
     Message,
-    MessageEditOptions,
-    MessagePayload,
-    StringSelectMenuBuilder,
+    MessageActionRowComponentBuilder,
 } from "discord.js";
+import { Footnote } from "./footnote.ts";
 
 export const embedTemplate = new EmbedBuilder()
     .setColor(0x0099ff)
@@ -53,61 +53,61 @@ type PageUpdateFunction = (page: Page) => void;
 export class Page {
     title: string | undefined;
     embed: Embed | EmbedBuilder | undefined;
-    updateFunction: PageUpdateFunction | undefined;
-    footnotes: ActionRowBuilder<StringSelectMenuBuilder>[] | undefined[] = [];
+    private updateFunction: PageUpdateFunction | undefined;
+    footnotes: Footnote<MessageActionRowComponentBuilder>[] = [];
+    pageNumber: string | number;
 
-    constructor(data?: EmbedBuilder | Message) {
+    constructor(pageNumber: string | number, data?: EmbedBuilder | Message) {
         if (data instanceof EmbedBuilder) this.embed = data;
         if (data instanceof Message) this.importMessage(data);
+        this.pageNumber = pageNumber;
     }
 
-    publish(): MessageEditOptions | MessagePayload {
-        if (!this.embed && !this.title) return { content: "." };
+    publish(): BaseMessageOptions {
+        if (this.updateFunction) this.update();
 
-        const output: MessageEditOptions | MessagePayload = {
+        // Empty Message
+        if (!this.embed && !this.title && this.footnotes.length == 0) {
+            return { content: "." };
+        }
+
+        const output: BaseMessageOptions = {
             content: this.title,
         };
         if (this.embed) output.embeds = [this.embed];
+        output.components = this.getActionRows();
         return output;
     }
 
-    importMessage(msg: Message) {
+    importMessage(msg: Message): void {
         this.embed = msg.embeds[0];
         this.title = msg.content;
     }
 
-    update() {
+    addUpdateFunction(updateFunction: PageUpdateFunction) {
+        this.updateFunction = updateFunction;
+        return this;
+    }
+
+    update(): void {
         if (!this.updateFunction)
             throw new Error("No update function has been defined");
         this.updateFunction(this);
     }
-}
 
-export class pageBuilder {
-    content: string | undefined;
-    components: ActionRowBuilder[] = [];
-
-    // Generates interface to be sent as a message
-    render() {
-        return {
-            content: this.content || " ",
-            components: this.components,
-        };
+    addFootnote(footnote: Footnote<MessageActionRowComponentBuilder>): void {
+        if (this.footnotes.length == 5)
+            throw new Error("Messages can only contain up to 5 Action Rows");
+        this.footnotes.push(footnote);
     }
 
-    addContent(newContent: string) {
-        this.content = newContent;
-        return this;
-    }
-
-    addComponents(row: ActionRowBuilder) {
-        this.components.push(row);
-        return this;
+    getActionRows(): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+        if (this.footnotes.length == 0) return [];
+        const components: ActionRowBuilder<MessageActionRowComponentBuilder>[] =
+            [];
+        this.footnotes.forEach((fn) => {
+            components.push(fn.row);
+        });
+        return components;
     }
 }
-
-// export class pageTurner {
-//     constructor(UIElement: ActionRowComponent, ElementFunction: Function, output : Object) {
-
-// 	}
-// }

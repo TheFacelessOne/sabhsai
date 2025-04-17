@@ -1,30 +1,21 @@
 import { describe, expect, it } from "@jest/globals";
-import { getTestData } from "../test-utils.ts";
 import { Client, Message, TextChannel } from "discord.js";
+import { getTestData } from "../test-utils.ts";
 
-const testData = getTestData();
-const channel = testData.channel;
-
-const message = await channel.send(".");
+const testData = await getTestData();
+const message = testData.message;
 
 describe("setup", () => {
     it("data structure", async () => {
-        expect.assertions(2);
-
-        const testData = getTestData();
+        expect.assertions(3);
 
         expect(testData.client).toBeInstanceOf(Client);
         expect(testData.channel).toBeInstanceOf(TextChannel);
+        expect(testData.message).toBeInstanceOf(Message);
     });
 });
 
 describe("bot client", () => {
-    it("can send a message", async () => {
-        expect.assertions(1);
-
-        expect(message).toBeInstanceOf(Message);
-    });
-
     it("can edit messages", async () => {
         expect.assertions(3);
 
